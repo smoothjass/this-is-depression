@@ -1,0 +1,440 @@
+<html>
+<head>
+<title>this-is-depression.ipynb</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<style type="text/css">
+.s0 { color: #7a7e85;}
+.s1 { color: #bcbec4;}
+.s2 { color: #cf8e6d;}
+.s3 { color: #bcbec4;}
+.s4 { color: #6aab73;}
+.s5 { color: #2aacb8;}
+</style>
+</head>
+<body bgcolor="#1e1f22">
+<table CELLSPACING=0 CELLPADDING=5 COLS=1 WIDTH="100%" BGCOLOR="#606060" >
+<tr><td><center>
+<font face="Arial, Helvetica" color="#000000">
+this-is-depression.ipynb</font>
+</center></td></tr></table>
+<pre><span class="s0">#%% md 
+</span><span class="s1">### NLP project depression classifier 
+Duvivié Jasmin, Flor Nicolas, Pozdena Nicolas, Tiefengraber Marlis 
+</span><span class="s0">#%% md 
+</span><span class="s1">### github 
+https://github.com/smoothjass/this-is-depression 
+</span><span class="s0">#%% md 
+</span><span class="s1">### data 
+https://www.kaggle.com/datasets/infamouscoder/depression-reddit-cleaned 
+</span><span class="s0">#%% 
+</span><span class="s2">import </span><span class="s1">pandas </span><span class="s2">as </span><span class="s1">pd</span>
+<span class="s2">import </span><span class="s1">numpy </span><span class="s2">as </span><span class="s1">np</span>
+<span class="s2">import </span><span class="s1">re</span>
+<span class="s2">from </span><span class="s1">sklearn</span><span class="s3">.</span><span class="s1">feature_extraction</span><span class="s3">.</span><span class="s1">text </span><span class="s2">import </span><span class="s1">CountVectorizer</span>
+<span class="s2">from </span><span class="s1">sklearn</span><span class="s3">.</span><span class="s1">feature_extraction</span><span class="s3">.</span><span class="s1">text </span><span class="s2">import </span><span class="s1">TfidfVectorizer</span>
+<span class="s2">from </span><span class="s1">sklearn</span><span class="s3">.</span><span class="s1">model_selection </span><span class="s2">import </span><span class="s1">train_test_split</span>
+<span class="s2">from </span><span class="s1">sklearn</span><span class="s3">.</span><span class="s1">naive_bayes </span><span class="s2">import </span><span class="s1">MultinomialNB</span>
+<span class="s2">from </span><span class="s1">sklearn</span><span class="s3">.</span><span class="s1">metrics </span><span class="s2">import </span><span class="s1">confusion_matrix</span><span class="s3">, </span><span class="s1">accuracy_score</span><span class="s3">, </span><span class="s1">f1_score</span><span class="s3">, </span><span class="s1">classification_report</span>
+
+<span class="s2">import </span><span class="s1">nltk</span><span class="s3">, </span><span class="s1">keras</span><span class="s3">, </span><span class="s1">string</span><span class="s3">, </span><span class="s1">html</span><span class="s3">, </span><span class="s1">math</span>
+<span class="s2">from </span><span class="s1">nltk</span><span class="s3">.</span><span class="s1">tokenize </span><span class="s2">import </span><span class="s1">word_tokenize</span><span class="s3">, </span><span class="s1">sent_tokenize</span>
+<span class="s2">from </span><span class="s1">nltk</span><span class="s3">.</span><span class="s1">corpus </span><span class="s2">import </span><span class="s1">stopwords</span><span class="s3">, </span><span class="s1">wordnet</span>
+<span class="s2">from </span><span class="s1">nltk</span><span class="s3">.</span><span class="s1">stem </span><span class="s2">import </span><span class="s1">WordNetLemmatizer</span>
+<span class="s2">from </span><span class="s1">sklearn</span><span class="s3">.</span><span class="s1">preprocessing </span><span class="s2">import </span><span class="s1">LabelEncoder</span>
+<span class="s2">from </span><span class="s1">collections </span><span class="s2">import </span><span class="s1">Counter</span><span class="s3">, </span><span class="s1">defaultdict</span>
+<span class="s2">from </span><span class="s1">keras</span><span class="s3">.</span><span class="s1">preprocessing</span><span class="s3">.</span><span class="s1">text </span><span class="s2">import </span><span class="s1">Tokenizer</span>
+<span class="s2">from </span><span class="s1">keras_preprocessing</span><span class="s3">.</span><span class="s1">sequence </span><span class="s2">import </span><span class="s1">pad_sequences</span>
+<span class="s2">from </span><span class="s1">gensim</span><span class="s3">.</span><span class="s1">parsing</span><span class="s3">.</span><span class="s1">preprocessing </span><span class="s2">import </span><span class="s1">remove_stopwords </span>
+<span class="s2">from </span><span class="s1">gensim</span><span class="s3">.</span><span class="s1">models </span><span class="s2">import </span><span class="s1">Word2Vec</span>
+<span class="s2">from </span><span class="s1">tensorflow</span><span class="s3">.</span><span class="s1">keras </span><span class="s2">import </span><span class="s1">layers</span>
+<span class="s1">nltk</span><span class="s3">.</span><span class="s1">download</span><span class="s3">(</span><span class="s4">'punkt'</span><span class="s3">)</span>
+<span class="s1">nltk</span><span class="s3">.</span><span class="s1">download</span><span class="s3">(</span><span class="s4">'wordnet'</span><span class="s3">)</span>
+
+<span class="s2">import </span><span class="s1">matplotlib</span><span class="s3">.</span><span class="s1">pyplot </span><span class="s2">as </span><span class="s1">plt</span>
+<span class="s2">from </span><span class="s1">wordcloud </span><span class="s2">import </span><span class="s1">WordCloud</span>
+<span class="s1">nltk</span><span class="s3">.</span><span class="s1">download</span><span class="s3">(</span><span class="s4">'stopwords'</span><span class="s3">)</span>
+<span class="s0">#%% 
+</span><span class="s1">pd</span><span class="s3">.</span><span class="s1">set_option</span><span class="s3">(</span><span class="s4">'display.max_colwidth'</span><span class="s3">, </span><span class="s2">None</span><span class="s3">)</span>
+<span class="s0">#%% 
+# read data, assign column names, skip header</span>
+<span class="s1">data </span><span class="s3">= </span><span class="s1">pd</span><span class="s3">.</span><span class="s1">read_csv</span><span class="s3">(</span><span class="s4">&quot;depression_dataset_reddit_cleaned.csv&quot;</span><span class="s3">, </span><span class="s1">names</span><span class="s3">=[</span><span class="s4">&quot;text&quot;</span><span class="s3">, </span><span class="s4">&quot;is_depression&quot;</span><span class="s3">], </span><span class="s1">header</span><span class="s3">=</span><span class="s5">0</span><span class="s3">)</span>
+<span class="s0">#%% md 
+</span><span class="s1"># Visualiziation of data 
+ 
+### not depressed = blue | depressions = orange 
+</span><span class="s0">#%% 
+</span><span class="s1">counts </span><span class="s3">= </span><span class="s1">data</span><span class="s3">[</span><span class="s4">&quot;is_depression&quot;</span><span class="s3">].</span><span class="s1">map</span><span class="s3">({</span><span class="s5">0</span><span class="s3">: </span><span class="s4">&quot;not depressed&quot;</span><span class="s3">, </span><span class="s5">1</span><span class="s3">: </span><span class="s4">&quot;depressed&quot;</span><span class="s3">}).</span><span class="s1">value_counts</span><span class="s3">()</span>
+
+<span class="s1">counts</span><span class="s3">.</span><span class="s1">plot</span><span class="s3">(</span><span class="s1">kind</span><span class="s3">=</span><span class="s4">'bar'</span><span class="s3">, </span><span class="s1">color</span><span class="s3">=[</span><span class="s4">'blue'</span><span class="s3">, </span><span class="s4">'orange'</span><span class="s3">])</span>
+<span class="s1">plt</span><span class="s3">.</span><span class="s1">title</span><span class="s3">(</span><span class="s4">&quot;amount of posts&quot;</span><span class="s3">, </span><span class="s1">fontsize</span><span class="s3">=</span><span class="s5">16</span><span class="s3">)</span>
+
+<span class="s1">plt</span><span class="s3">.</span><span class="s1">show</span><span class="s3">()</span>
+<span class="s0">#%% md 
+</span><span class="s1">the data is evenly distributed 
+</span><span class="s0">#%% md 
+</span><span class="s1">### Comparing the lenght of the texts 
+</span><span class="s0">#%% 
+</span><span class="s1">data</span><span class="s3">[</span><span class="s4">&quot;length&quot;</span><span class="s3">] = </span><span class="s1">data</span><span class="s3">[</span><span class="s4">&quot;text&quot;</span><span class="s3">].</span><span class="s1">apply</span><span class="s3">(</span><span class="s1">len</span><span class="s3">)</span>
+
+<span class="s1">notDepressed </span><span class="s3">= </span><span class="s1">data</span><span class="s3">[</span><span class="s1">data</span><span class="s3">[</span><span class="s4">&quot;is_depression&quot;</span><span class="s3">] == </span><span class="s5">0</span><span class="s3">]</span>
+<span class="s1">depressed </span><span class="s3">= </span><span class="s1">data</span><span class="s3">[</span><span class="s1">data</span><span class="s3">[</span><span class="s4">&quot;is_depression&quot;</span><span class="s3">] == </span><span class="s5">1</span><span class="s3">]</span>
+
+<span class="s1">nD </span><span class="s3">= </span><span class="s1">len</span><span class="s3">(</span><span class="s1">notDepressed</span><span class="s3">)</span>
+<span class="s1">d </span><span class="s3">= </span><span class="s1">len</span><span class="s3">(</span><span class="s1">depressed</span><span class="s3">)</span>
+
+<span class="s0"># for better visualization</span>
+<span class="s1">notDepressed </span><span class="s3">= </span><span class="s1">notDepressed</span><span class="s3">[</span><span class="s1">notDepressed</span><span class="s3">[</span><span class="s4">&quot;length&quot;</span><span class="s3">] &lt; </span><span class="s5">1200</span><span class="s3">]</span>
+<span class="s1">depressed </span><span class="s3">= </span><span class="s1">depressed</span><span class="s3">[</span><span class="s1">depressed</span><span class="s3">[</span><span class="s4">&quot;length&quot;</span><span class="s3">] &lt; </span><span class="s5">1200</span><span class="s3">]</span>
+
+<span class="s0"># how many posts did we lose</span>
+<span class="s1">print</span><span class="s3">(</span><span class="s4">f&quot;loss not depressed </span><span class="s2">{</span><span class="s1">nD </span><span class="s3">- </span><span class="s1">len</span><span class="s3">(</span><span class="s1">notDepressed</span><span class="s3">)</span><span class="s2">}</span><span class="s4">&quot;</span><span class="s3">)</span>
+<span class="s1">print</span><span class="s3">(</span><span class="s4">f&quot;loss depressed </span><span class="s2">{</span><span class="s1">d </span><span class="s3">- </span><span class="s1">len</span><span class="s3">(</span><span class="s1">depressed</span><span class="s3">)</span><span class="s2">}</span><span class="s4">&quot;</span><span class="s3">)</span>
+
+<span class="s1">plt</span><span class="s3">.</span><span class="s1">hist</span><span class="s3">(</span><span class="s1">depressed</span><span class="s3">[</span><span class="s4">'length'</span><span class="s3">], </span><span class="s1">color</span><span class="s3">=</span><span class="s4">'orange'</span><span class="s3">, </span><span class="s1">bins</span><span class="s3">=</span><span class="s5">50</span><span class="s3">)</span>
+<span class="s1">plt</span><span class="s3">.</span><span class="s1">hist</span><span class="s3">(</span><span class="s1">notDepressed</span><span class="s3">[</span><span class="s4">'length'</span><span class="s3">],</span><span class="s1">color</span><span class="s3">=</span><span class="s4">'blue'</span><span class="s3">, </span><span class="s1">bins</span><span class="s3">=</span><span class="s5">50</span><span class="s3">)</span>
+
+
+
+<span class="s1">plt</span><span class="s3">.</span><span class="s1">title</span><span class="s3">(</span><span class="s4">'Distribution of Text Lengths'</span><span class="s3">)</span>
+<span class="s1">plt</span><span class="s3">.</span><span class="s1">xlabel</span><span class="s3">(</span><span class="s4">'Text Length'</span><span class="s3">)</span>
+<span class="s1">plt</span><span class="s3">.</span><span class="s1">ylabel</span><span class="s3">(</span><span class="s4">'Frequency'</span><span class="s3">)</span>
+<span class="s1">plt</span><span class="s3">.</span><span class="s1">show</span><span class="s3">()</span>
+<span class="s0">#%% md 
+</span><span class="s1"># Preprocessing 
+ 
+### Removing Stop Words =&gt; keeping important words 
+</span><span class="s0">#%% 
+</span><span class="s2">def </span><span class="s1">removingStopWords</span><span class="s3">(</span><span class="s1">text</span><span class="s3">):</span>
+    <span class="s1">words </span><span class="s3">= </span><span class="s1">text</span><span class="s3">.</span><span class="s1">split</span><span class="s3">(</span><span class="s4">' '</span><span class="s3">)</span>
+    <span class="s1">valuedWords </span><span class="s3">= [</span><span class="s1">word </span><span class="s2">for </span><span class="s1">word </span><span class="s2">in </span><span class="s1">words </span><span class="s2">if </span><span class="s1">word </span><span class="s2">not in </span><span class="s1">stopwords</span><span class="s3">.</span><span class="s1">words</span><span class="s3">(</span><span class="s4">'english'</span><span class="s3">)]</span>
+    <span class="s2">return </span><span class="s1">valuedWords</span>
+
+<span class="s1">data</span><span class="s3">[</span><span class="s4">&quot;valueWords&quot;</span><span class="s3">] = </span><span class="s1">data</span><span class="s3">[</span><span class="s4">&quot;text&quot;</span><span class="s3">].</span><span class="s1">apply</span><span class="s3">(</span><span class="s1">removingStopWords</span><span class="s3">)</span>
+<span class="s1">data</span><span class="s3">[</span><span class="s4">&quot;valueLength&quot;</span><span class="s3">] = </span><span class="s1">data</span><span class="s3">[</span><span class="s4">&quot;valueWords&quot;</span><span class="s3">].</span><span class="s1">apply</span><span class="s3">(</span><span class="s1">len</span><span class="s3">)</span>
+
+<span class="s1">data</span>
+<span class="s0">#%% md 
+</span><span class="s1">### Text Lengths vs. Valued Words 
+</span><span class="s0">#%% 
+</span>
+<span class="s1">words </span><span class="s3">= </span><span class="s1">data</span><span class="s3">[</span><span class="s1">data</span><span class="s3">[</span><span class="s4">&quot;length&quot;</span><span class="s3">] &lt; </span><span class="s5">1200</span><span class="s3">]</span>
+
+<span class="s1">colorMap </span><span class="s3">= [</span><span class="s4">&quot;blue&quot;</span><span class="s3">, </span><span class="s4">&quot;orange&quot;</span><span class="s3">]</span>
+<span class="s1">colors </span><span class="s3">= [</span><span class="s1">colorMap</span><span class="s3">[</span><span class="s1">val</span><span class="s3">] </span><span class="s2">for </span><span class="s1">val </span><span class="s2">in </span><span class="s1">words</span><span class="s3">[</span><span class="s4">&quot;is_depression&quot;</span><span class="s3">]]</span>
+
+<span class="s1">plt</span><span class="s3">.</span><span class="s1">scatter</span><span class="s3">(</span><span class="s1">words</span><span class="s3">[</span><span class="s4">&quot;length&quot;</span><span class="s3">],</span><span class="s1">words</span><span class="s3">[</span><span class="s4">&quot;valueLength&quot;</span><span class="s3">], </span><span class="s1">color</span><span class="s3">=</span><span class="s1">colors</span><span class="s3">, </span><span class="s1">marker</span><span class="s3">=</span><span class="s4">'o'</span><span class="s3">, </span><span class="s1">alpha</span><span class="s3">=</span><span class="s5">0.5</span><span class="s3">)</span>
+
+
+<span class="s1">plt</span><span class="s3">.</span><span class="s1">title</span><span class="s3">(</span><span class="s4">'Distribution of Text Lengths'</span><span class="s3">)</span>
+<span class="s1">plt</span><span class="s3">.</span><span class="s1">xlabel</span><span class="s3">(</span><span class="s4">'all words'</span><span class="s3">)</span>
+<span class="s1">plt</span><span class="s3">.</span><span class="s1">ylabel</span><span class="s3">(</span><span class="s4">'valued words'</span><span class="s3">)</span>
+<span class="s1">plt</span><span class="s3">.</span><span class="s1">show</span><span class="s3">()</span>
+<span class="s0">#%% 
+</span><span class="s1">data</span><span class="s3">[</span><span class="s4">'valueText'</span><span class="s3">] = </span><span class="s1">data</span><span class="s3">[</span><span class="s4">&quot;valueWords&quot;</span><span class="s3">].</span><span class="s1">apply</span><span class="s3">(</span><span class="s2">lambda  </span><span class="s1">x</span><span class="s3">: </span><span class="s4">' '</span><span class="s3">.</span><span class="s1">join</span><span class="s3">(</span><span class="s1">x</span><span class="s3">))</span>
+<span class="s0">#%% md 
+</span><span class="s1">### Creating word clouds to show most frequently occurring words 
+</span><span class="s0">#%% 
+</span><span class="s1">ndText </span><span class="s3">= </span><span class="s4">' '</span><span class="s3">.</span><span class="s1">join</span><span class="s3">(</span><span class="s1">data</span><span class="s3">[</span><span class="s4">'valueText'</span><span class="s3">].</span><span class="s1">loc</span><span class="s3">[</span><span class="s1">data</span><span class="s3">[</span><span class="s4">'is_depression'</span><span class="s3">]==</span><span class="s5">0</span><span class="s3">])</span>
+<span class="s1">dText </span><span class="s3">= </span><span class="s4">' '</span><span class="s3">.</span><span class="s1">join</span><span class="s3">(</span><span class="s1">data</span><span class="s3">[</span><span class="s4">'valueText'</span><span class="s3">].</span><span class="s1">loc</span><span class="s3">[</span><span class="s1">data</span><span class="s3">[</span><span class="s4">'is_depression'</span><span class="s3">]==</span><span class="s5">1</span><span class="s3">])</span>
+
+<span class="s0"># Create WordCloud objects for each category</span>
+<span class="s1">ndWordcloud </span><span class="s3">= </span><span class="s1">WordCloud</span><span class="s3">(</span><span class="s1">width</span><span class="s3">=</span><span class="s5">800</span><span class="s3">, </span><span class="s1">height</span><span class="s3">=</span><span class="s5">400</span><span class="s3">, </span><span class="s1">background_color</span><span class="s3">=</span><span class="s4">'white'</span><span class="s3">).</span><span class="s1">generate</span><span class="s3">(</span><span class="s1">ndText</span><span class="s3">)</span>
+<span class="s1">dWordcloud </span><span class="s3">= </span><span class="s1">WordCloud</span><span class="s3">(</span><span class="s1">width</span><span class="s3">=</span><span class="s5">800</span><span class="s3">, </span><span class="s1">height</span><span class="s3">=</span><span class="s5">400</span><span class="s3">, </span><span class="s1">background_color</span><span class="s3">=</span><span class="s4">'white'</span><span class="s3">).</span><span class="s1">generate</span><span class="s3">(</span><span class="s1">dText</span><span class="s3">)</span>
+
+
+<span class="s1">plt</span><span class="s3">.</span><span class="s1">rcParams</span><span class="s3">[</span><span class="s4">'font.sans-serif'</span><span class="s3">] = </span><span class="s4">'Arial'</span>
+
+
+<span class="s0"># Display the non-depression word cloud</span>
+<span class="s1">plt</span><span class="s3">.</span><span class="s1">figure</span><span class="s3">(</span><span class="s1">figsize</span><span class="s3">=(</span><span class="s5">12</span><span class="s3">, </span><span class="s5">6</span><span class="s3">))</span>
+<span class="s1">plt</span><span class="s3">.</span><span class="s1">subplot</span><span class="s3">(</span><span class="s5">1</span><span class="s3">, </span><span class="s5">2</span><span class="s3">, </span><span class="s5">1</span><span class="s3">)</span>
+<span class="s1">plt</span><span class="s3">.</span><span class="s1">imshow</span><span class="s3">(</span><span class="s1">ndWordcloud</span><span class="s3">, </span><span class="s1">interpolation</span><span class="s3">=</span><span class="s4">'bilinear'</span><span class="s3">)</span>
+<span class="s1">plt</span><span class="s3">.</span><span class="s1">title</span><span class="s3">(</span><span class="s4">'Non-Depression Word Cloud'</span><span class="s3">)</span>
+<span class="s1">plt</span><span class="s3">.</span><span class="s1">axis</span><span class="s3">(</span><span class="s4">'off'</span><span class="s3">)</span>
+
+<span class="s0"># Display the depression word cloud</span>
+<span class="s1">plt</span><span class="s3">.</span><span class="s1">subplot</span><span class="s3">(</span><span class="s5">1</span><span class="s3">, </span><span class="s5">2</span><span class="s3">, </span><span class="s5">2</span><span class="s3">)</span>
+<span class="s1">plt</span><span class="s3">.</span><span class="s1">imshow</span><span class="s3">(</span><span class="s1">dWordcloud</span><span class="s3">, </span><span class="s1">interpolation</span><span class="s3">=</span><span class="s4">'bilinear'</span><span class="s3">)</span>
+<span class="s1">plt</span><span class="s3">.</span><span class="s1">title</span><span class="s3">(</span><span class="s4">'Depression Word Cloud'</span><span class="s3">)</span>
+<span class="s1">plt</span><span class="s3">.</span><span class="s1">axis</span><span class="s3">(</span><span class="s4">'off'</span><span class="s3">)</span>
+
+<span class="s1">plt</span><span class="s3">.</span><span class="s1">show</span><span class="s3">()</span>
+<span class="s0">#%% 
+# look at some samples</span>
+<span class="s1">print</span><span class="s3">(</span><span class="s4">&quot;depression:</span><span class="s2">\n</span><span class="s4">&quot; </span><span class="s3">+ </span>
+      <span class="s1">str</span><span class="s3">(</span><span class="s1">data</span><span class="s3">[</span><span class="s1">data</span><span class="s3">[</span><span class="s4">&quot;is_depression&quot;</span><span class="s3">] == </span><span class="s5">1</span><span class="s3">].</span><span class="s1">sample</span><span class="s3">(</span><span class="s1">n</span><span class="s3">=</span><span class="s5">3</span><span class="s3">).</span><span class="s1">text</span><span class="s3">.</span><span class="s1">tolist</span><span class="s3">()))</span>
+<span class="s1">print</span><span class="s3">(</span><span class="s4">&quot;not depression:</span><span class="s2">\n</span><span class="s4">&quot; </span><span class="s3">+ </span>
+      <span class="s1">str</span><span class="s3">(</span><span class="s1">data</span><span class="s3">[</span><span class="s1">data</span><span class="s3">[</span><span class="s4">&quot;is_depression&quot;</span><span class="s3">] == </span><span class="s5">0</span><span class="s3">].</span><span class="s1">sample</span><span class="s3">(</span><span class="s1">n</span><span class="s3">=</span><span class="s5">3</span><span class="s3">).</span><span class="s1">text</span><span class="s3">.</span><span class="s1">tolist</span><span class="s3">()))</span>
+<span class="s0">#%% 
+# class balance</span>
+<span class="s1">print</span><span class="s3">(</span><span class="s1">data</span><span class="s3">[</span><span class="s1">data</span><span class="s3">[</span><span class="s4">&quot;is_depression&quot;</span><span class="s3">] == </span><span class="s5">1</span><span class="s3">].</span><span class="s1">count</span><span class="s3">())</span>
+<span class="s1">print</span><span class="s3">(</span><span class="s1">data</span><span class="s3">[</span><span class="s1">data</span><span class="s3">[</span><span class="s4">&quot;is_depression&quot;</span><span class="s3">] == </span><span class="s5">0</span><span class="s3">].</span><span class="s1">count</span><span class="s3">())</span>
+<span class="s0">#%% md 
+</span><span class="s1">### Looking at the length of the texts 
+</span><span class="s0">#%% 
+# the samples suggest, the is_depression texts are longer than the others. Is that really so?</span>
+<span class="s0"># print average length, min length and max length of elements shows that length could be an important factor</span>
+<span class="s1">print</span><span class="s3">(</span><span class="s4">&quot;depression:</span><span class="s2">\n</span><span class="s4">&quot;</span>
+      <span class="s4">&quot;avg: &quot; </span><span class="s3">+ </span><span class="s1">str</span><span class="s3">(</span><span class="s1">sum</span><span class="s3">(</span><span class="s1">map</span><span class="s3">(</span><span class="s1">len</span><span class="s3">, </span><span class="s1">data</span><span class="s3">[</span><span class="s1">data</span><span class="s3">[</span><span class="s4">&quot;is_depression&quot;</span><span class="s3">] == </span><span class="s5">1</span><span class="s3">].</span><span class="s1">text</span><span class="s3">))/</span><span class="s1">float</span><span class="s3">(</span><span class="s1">len</span><span class="s3">(</span><span class="s1">data</span><span class="s3">[</span><span class="s1">data</span><span class="s3">[</span><span class="s4">&quot;is_depression&quot;</span><span class="s3">] == </span><span class="s5">1</span><span class="s3">].</span><span class="s1">text</span><span class="s3">))) + </span><span class="s4">&quot;</span><span class="s2">\n</span><span class="s4">&quot; </span><span class="s3">+</span>
+      <span class="s4">&quot;min: &quot; </span><span class="s3">+ </span><span class="s1">str</span><span class="s3">(</span><span class="s1">min</span><span class="s3">(</span><span class="s1">map</span><span class="s3">(</span><span class="s1">len</span><span class="s3">, </span><span class="s1">data</span><span class="s3">[</span><span class="s1">data</span><span class="s3">[</span><span class="s4">&quot;is_depression&quot;</span><span class="s3">] == </span><span class="s5">1</span><span class="s3">].</span><span class="s1">text</span><span class="s3">))) + </span><span class="s4">&quot;</span><span class="s2">\n</span><span class="s4">&quot; </span><span class="s3">+</span>
+      <span class="s4">&quot;max: &quot; </span><span class="s3">+ </span><span class="s1">str</span><span class="s3">(</span><span class="s1">max</span><span class="s3">(</span><span class="s1">map</span><span class="s3">(</span><span class="s1">len</span><span class="s3">, </span><span class="s1">data</span><span class="s3">[</span><span class="s1">data</span><span class="s3">[</span><span class="s4">&quot;is_depression&quot;</span><span class="s3">] == </span><span class="s5">1</span><span class="s3">].</span><span class="s1">text</span><span class="s3">))) + </span><span class="s4">&quot;</span><span class="s2">\n</span><span class="s4">&quot;</span>
+      <span class="s3">)</span>
+<span class="s1">print</span><span class="s3">(</span><span class="s4">&quot;not depression:</span><span class="s2">\n</span><span class="s4">&quot;</span>
+      <span class="s4">&quot;avg: &quot; </span><span class="s3">+ </span><span class="s1">str</span><span class="s3">(</span><span class="s1">sum</span><span class="s3">(</span><span class="s1">map</span><span class="s3">(</span><span class="s1">len</span><span class="s3">, </span><span class="s1">data</span><span class="s3">[</span><span class="s1">data</span><span class="s3">[</span><span class="s4">&quot;is_depression&quot;</span><span class="s3">] == </span><span class="s5">0</span><span class="s3">].</span><span class="s1">text</span><span class="s3">))/</span><span class="s1">float</span><span class="s3">(</span><span class="s1">len</span><span class="s3">(</span><span class="s1">data</span><span class="s3">[</span><span class="s1">data</span><span class="s3">[</span><span class="s4">&quot;is_depression&quot;</span><span class="s3">] == </span><span class="s5">1</span><span class="s3">].</span><span class="s1">text</span><span class="s3">))) + </span><span class="s4">&quot;</span><span class="s2">\n</span><span class="s4">&quot; </span><span class="s3">+</span>
+      <span class="s4">&quot;min: &quot; </span><span class="s3">+ </span><span class="s1">str</span><span class="s3">(</span><span class="s1">min</span><span class="s3">(</span><span class="s1">map</span><span class="s3">(</span><span class="s1">len</span><span class="s3">, </span><span class="s1">data</span><span class="s3">[</span><span class="s1">data</span><span class="s3">[</span><span class="s4">&quot;is_depression&quot;</span><span class="s3">] == </span><span class="s5">0</span><span class="s3">].</span><span class="s1">text</span><span class="s3">))) + </span><span class="s4">&quot;</span><span class="s2">\n</span><span class="s4">&quot; </span><span class="s3">+</span>
+      <span class="s4">&quot;max: &quot; </span><span class="s3">+ </span><span class="s1">str</span><span class="s3">(</span><span class="s1">max</span><span class="s3">(</span><span class="s1">map</span><span class="s3">(</span><span class="s1">len</span><span class="s3">, </span><span class="s1">data</span><span class="s3">[</span><span class="s1">data</span><span class="s3">[</span><span class="s4">&quot;is_depression&quot;</span><span class="s3">] == </span><span class="s5">0</span><span class="s3">].</span><span class="s1">text</span><span class="s3">))) + </span><span class="s4">&quot;</span><span class="s2">\n</span><span class="s4">&quot;</span>
+      <span class="s3">)</span>
+<span class="s0">#%% md 
+</span><span class="s1">## pre-process and explore some more 
+</span><span class="s0">#%% 
+</span><span class="s2">def </span><span class="s1">preprocess</span><span class="s3">(</span><span class="s1">text</span><span class="s3">):</span>
+    <span class="s0"># remove extra blanks</span>
+    <span class="s1">re</span><span class="s3">.</span><span class="s1">sub</span><span class="s3">(</span><span class="s4">r'\t{2,}'</span><span class="s3">, </span><span class="s4">' '</span><span class="s3">, </span><span class="s1">text</span><span class="s3">)</span>
+    <span class="s0"># lowercase</span>
+    <span class="s1">text </span><span class="s3">= </span><span class="s1">text</span><span class="s3">.</span><span class="s1">lower</span><span class="s3">()</span>
+    <span class="s0"># TODO other stuff</span>
+    <span class="s1">text </span><span class="s3">= </span><span class="s1">remove_stopwords</span><span class="s3">(</span><span class="s1">text</span><span class="s3">)</span>
+    <span class="s1">text </span><span class="s3">= </span><span class="s1">word_tokenize</span><span class="s3">(</span><span class="s1">text</span><span class="s3">)</span>
+    <span class="s2">return </span><span class="s1">text</span>
+
+<span class="s2">def </span><span class="s1">preprocess_extensive</span><span class="s3">(</span><span class="s1">text</span><span class="s3">):</span>
+     <span class="s0"># remove extra blanks</span>
+    <span class="s1">re</span><span class="s3">.</span><span class="s1">sub</span><span class="s3">(</span><span class="s4">r'\t{2,}'</span><span class="s3">, </span><span class="s4">' '</span><span class="s3">, </span><span class="s1">text</span><span class="s3">)</span>
+    <span class="s0"># remove numbers</span>
+    <span class="s1">text </span><span class="s3">= </span><span class="s4">''</span><span class="s3">.</span><span class="s1">join</span><span class="s3">(</span><span class="s1">i </span><span class="s2">for </span><span class="s1">i </span><span class="s2">in </span><span class="s1">text </span><span class="s2">if not </span><span class="s1">i</span><span class="s3">.</span><span class="s1">isdigit</span><span class="s3">())</span>
+    <span class="s0"># lowercase</span>
+    <span class="s1">text </span><span class="s3">= </span><span class="s1">text</span><span class="s3">.</span><span class="s1">lower</span><span class="s3">()</span>
+    <span class="s0"># remove stopwords with gensim</span>
+    <span class="s1">text </span><span class="s3">= </span><span class="s1">remove_stopwords</span><span class="s3">(</span><span class="s1">text</span><span class="s3">)</span>
+    <span class="s0"># tokenize</span>
+    <span class="s1">text </span><span class="s3">= </span><span class="s1">word_tokenize</span><span class="s3">(</span><span class="s1">text</span><span class="s3">)</span>
+    <span class="s0"># lemmatize tokens</span>
+    <span class="s1">lemmatizer </span><span class="s3">= </span><span class="s1">WordNetLemmatizer</span><span class="s3">()</span>
+    <span class="s1">lemm_text </span><span class="s3">= [</span><span class="s1">lemmatizer</span><span class="s3">.</span><span class="s1">lemmatize</span><span class="s3">(</span><span class="s1">word</span><span class="s3">) </span><span class="s2">for </span><span class="s1">word </span><span class="s2">in </span><span class="s1">text</span><span class="s3">]</span>
+    <span class="s1">text </span><span class="s3">= </span><span class="s4">' '</span><span class="s3">.</span><span class="s1">join</span><span class="s3">(</span><span class="s1">lemm_text</span><span class="s3">)</span>
+    <span class="s2">return </span><span class="s1">text</span>
+
+<span class="s1">data</span><span class="s3">[</span><span class="s4">&quot;text&quot;</span><span class="s3">] = </span><span class="s1">data</span><span class="s3">[</span><span class="s4">&quot;text&quot;</span><span class="s3">].</span><span class="s1">apply</span><span class="s3">(</span><span class="s1">preprocess_extensive</span><span class="s3">)</span>
+
+<span class="s0">#%% md 
+</span><span class="s1">### finding the most common words 
+</span><span class="s0">#%% 
+</span><span class="s1">word_list </span><span class="s3">= [</span><span class="s1">word_tokenize</span><span class="s3">(</span><span class="s1">text</span><span class="s3">) </span><span class="s2">for </span><span class="s1">text </span><span class="s2">in </span><span class="s1">data</span><span class="s3">[</span><span class="s4">&quot;text&quot;</span><span class="s3">]]</span>
+<span class="s0"># Flatten the list of lists into a single list of words (excluding words shorter that 3 chars as many single letters remain after preprocessing)</span>
+<span class="s1">flat_word_list </span><span class="s3">= [</span><span class="s1">word </span><span class="s2">for </span><span class="s1">sublist </span><span class="s2">in </span><span class="s1">word_list </span><span class="s2">for </span><span class="s1">word </span><span class="s2">in </span><span class="s1">sublist </span><span class="s2">if </span><span class="s1">len</span><span class="s3">(</span><span class="s1">word</span><span class="s3">) &gt; </span><span class="s5">2</span><span class="s3">]</span>
+<span class="s0"># Use Counter to count the occurrences of each word</span>
+<span class="s1">word_counts </span><span class="s3">= </span><span class="s1">Counter</span><span class="s3">(</span><span class="s1">flat_word_list</span><span class="s3">)</span>
+<span class="s0"># Get the 10 most common words</span>
+<span class="s1">most_common_words </span><span class="s3">= </span><span class="s1">word_counts</span><span class="s3">.</span><span class="s1">most_common</span><span class="s3">(</span><span class="s5">10</span><span class="s3">)</span>
+<span class="s1">com_words_df </span><span class="s3">= </span><span class="s1">pd</span><span class="s3">.</span><span class="s1">DataFrame</span><span class="s3">(</span><span class="s1">most_common_words</span><span class="s3">, </span><span class="s1">columns</span><span class="s3">=[</span><span class="s4">'Word'</span><span class="s3">, </span><span class="s4">'Count'</span><span class="s3">])</span>
+<span class="s1">print</span><span class="s3">(</span><span class="s1">com_words_df</span><span class="s3">)</span>
+<span class="s0">#%% 
+# try word2vec on data</span>
+<span class="s0"># Build Word2Vec model</span>
+<span class="s1">model </span><span class="s3">= </span><span class="s1">Word2Vec</span><span class="s3">(</span><span class="s1">sentences</span><span class="s3">=</span><span class="s1">word_list</span><span class="s3">, </span><span class="s1">vector_size</span><span class="s3">=</span><span class="s5">50</span><span class="s3">, </span><span class="s1">window</span><span class="s3">=</span><span class="s5">3</span><span class="s3">, </span><span class="s1">min_count</span><span class="s3">=</span><span class="s5">1</span><span class="s3">, </span><span class="s1">workers</span><span class="s3">=</span><span class="s5">4</span><span class="s3">)</span>
+
+<span class="s0">#%% 
+# Find the top 10 words most similar to &quot;depression&quot;</span>
+<span class="s1">similar_words </span><span class="s3">= </span><span class="s1">model</span><span class="s3">.</span><span class="s1">wv</span><span class="s3">.</span><span class="s1">most_similar</span><span class="s3">(</span><span class="s4">&quot;depression&quot;</span><span class="s3">, </span><span class="s1">topn</span><span class="s3">=</span><span class="s5">10</span><span class="s3">)</span>
+<span class="s1">sim_words_df </span><span class="s3">= </span><span class="s1">pd</span><span class="s3">.</span><span class="s1">DataFrame</span><span class="s3">(</span><span class="s1">similar_words</span><span class="s3">, </span><span class="s1">columns</span><span class="s3">=[</span><span class="s4">'Word'</span><span class="s3">, </span><span class="s4">'Similarity'</span><span class="s3">])</span>
+<span class="s1">print</span><span class="s3">(</span><span class="s1">sim_words_df</span><span class="s3">)</span>
+<span class="s0">#%% md 
+</span><span class="s1">### feature extraction 
+ 
+bag of words 
+</span><span class="s0">#%% 
+# vectorizer does tokenization, data already lowercased</span>
+<span class="s0"># https://scikit-learn.org/stable/modules/feature_extraction.html</span>
+<span class="s0"># https://scikit-learn.org/stable/modules/generated/sklearn.feature_extraction.text.CountVectorizer.html#sklearn.feature_extraction.text.CountVectorizer</span>
+<span class="s1">X </span><span class="s3">= </span><span class="s1">data</span><span class="s3">[</span><span class="s4">'text'</span><span class="s3">].</span><span class="s1">to_numpy</span><span class="s3">()</span>
+<span class="s1">y </span><span class="s3">= </span><span class="s1">data</span><span class="s3">[</span><span class="s4">'is_depression'</span><span class="s3">].</span><span class="s1">to_numpy</span><span class="s3">()</span>
+<span class="s0"># Bag of words</span>
+<span class="s1">vectorizer </span><span class="s3">= </span><span class="s1">CountVectorizer</span><span class="s3">(</span><span class="s1">analyzer</span><span class="s3">=</span><span class="s4">'word'</span><span class="s3">, </span><span class="s1">ngram_range</span><span class="s3">=(</span><span class="s5">1</span><span class="s3">, </span><span class="s5">1</span><span class="s3">))</span>
+<span class="s1">X_BOW </span><span class="s3">= </span><span class="s1">vectorizer</span><span class="s3">.</span><span class="s1">fit_transform</span><span class="s3">(</span><span class="s1">X</span><span class="s3">)</span>
+<span class="s0">#%% md 
+</span><span class="s1">### splitting test &amp; train 
+</span><span class="s0">#%% 
+</span><span class="s1">X_train</span><span class="s3">, </span><span class="s1">X_test</span><span class="s3">, </span><span class="s1">y_train</span><span class="s3">, </span><span class="s1">y_test </span><span class="s3">= </span><span class="s1">train_test_split</span><span class="s3">(</span><span class="s1">X_BOW</span><span class="s3">, </span><span class="s1">y</span><span class="s3">, </span><span class="s1">stratify</span><span class="s3">=</span><span class="s1">y</span><span class="s3">)</span>
+<span class="s0">#%% md 
+</span><span class="s1">### train and predict with naive bayes 
+</span><span class="s0">#%% 
+# train</span>
+<span class="s0"># https://scikit-learn.org/stable/modules/generated/sklearn.naive_bayes.MultinomialNB.html#sklearn.naive_bayes.MultinomialNB</span>
+<span class="s1">clf </span><span class="s3">= </span><span class="s1">MultinomialNB</span><span class="s3">()</span>
+<span class="s1">clf</span><span class="s3">.</span><span class="s1">fit</span><span class="s3">(</span><span class="s1">X_train</span><span class="s3">, </span><span class="s1">y_train</span><span class="s3">)</span>
+<span class="s0"># predict</span>
+<span class="s1">y_hat </span><span class="s3">= </span><span class="s1">clf</span><span class="s3">.</span><span class="s1">predict</span><span class="s3">(</span><span class="s1">X_test</span><span class="s3">)</span>
+<span class="s0">#%% md 
+</span><span class="s1">### evaluation of the prediction 
+</span><span class="s0">#%% 
+# https://scikit-learn.org/stable/modules/generated/sklearn.metrics.confusion_matrix.html</span>
+<span class="s0"># https://scikit-learn.org/stable/modules/generated/sklearn.metrics.accuracy_score.html#sklearn.metrics.accuracy_score</span>
+<span class="s0"># https://scikit-learn.org/stable/modules/generated/sklearn.metrics.f1_score.html#sklearn.metrics.f1_score</span>
+<span class="s1">tn</span><span class="s3">, </span><span class="s1">fp</span><span class="s3">, </span><span class="s1">fn</span><span class="s3">, </span><span class="s1">tp </span><span class="s3">= </span><span class="s1">confusion_matrix</span><span class="s3">(</span><span class="s1">y_test</span><span class="s3">, </span><span class="s1">y_hat</span><span class="s3">).</span><span class="s1">ravel</span><span class="s3">()</span>
+<span class="s1">accuracy </span><span class="s3">= </span><span class="s1">accuracy_score</span><span class="s3">(</span><span class="s1">y_test</span><span class="s3">, </span><span class="s1">y_hat</span><span class="s3">)</span>
+<span class="s1">f1 </span><span class="s3">= </span><span class="s1">f1_score</span><span class="s3">(</span><span class="s1">y_test</span><span class="s3">, </span><span class="s1">y_hat</span><span class="s3">, </span><span class="s1">zero_division</span><span class="s3">=</span><span class="s5">1.0</span><span class="s3">)</span>
+<span class="s1">print</span><span class="s3">(</span><span class="s1">tn</span><span class="s3">, </span><span class="s1">fp</span><span class="s3">, </span><span class="s1">fn</span><span class="s3">, </span><span class="s1">tp</span><span class="s3">, </span><span class="s1">accuracy</span><span class="s3">, </span><span class="s1">f1</span><span class="s3">)</span>
+<span class="s0">#%% md 
+</span><span class="s1">### TF-IDF Vectorization &amp; Multinomial Naive Bayes 
+</span><span class="s0">#%% 
+# https://scikit-learn.org/stable/modules/generated/sklearn.feature_extraction.text.TfidfTransformer.html#sklearn.feature_extraction.text.TfidfTransformer</span>
+<span class="s0"># encode</span>
+<span class="s1">vectorizer </span><span class="s3">= </span><span class="s1">TfidfVectorizer</span><span class="s3">()</span>
+<span class="s1">X_TFIDF </span><span class="s3">= </span><span class="s1">vectorizer</span><span class="s3">.</span><span class="s1">fit_transform</span><span class="s3">(</span><span class="s1">X</span><span class="s3">)</span>
+<span class="s0"># split</span>
+<span class="s1">X_train</span><span class="s3">, </span><span class="s1">X_test</span><span class="s3">, </span><span class="s1">y_train</span><span class="s3">, </span><span class="s1">y_test </span><span class="s3">= </span><span class="s1">train_test_split</span><span class="s3">(</span><span class="s1">X_TFIDF</span><span class="s3">, </span><span class="s1">y</span><span class="s3">, </span><span class="s1">stratify</span><span class="s3">=</span><span class="s1">y</span><span class="s3">)</span>
+<span class="s0"># train</span>
+<span class="s1">clf </span><span class="s3">= </span><span class="s1">MultinomialNB</span><span class="s3">()</span>
+<span class="s1">clf</span><span class="s3">.</span><span class="s1">fit</span><span class="s3">(</span><span class="s1">X_train</span><span class="s3">, </span><span class="s1">y_train</span><span class="s3">)</span>
+<span class="s0"># predict</span>
+<span class="s1">y_hat </span><span class="s3">= </span><span class="s1">clf</span><span class="s3">.</span><span class="s1">predict</span><span class="s3">(</span><span class="s1">X_test</span><span class="s3">)</span>
+<span class="s0"># evaluate</span>
+<span class="s1">tn</span><span class="s3">, </span><span class="s1">fp</span><span class="s3">, </span><span class="s1">fn</span><span class="s3">, </span><span class="s1">tp </span><span class="s3">= </span><span class="s1">confusion_matrix</span><span class="s3">(</span><span class="s1">y_test</span><span class="s3">, </span><span class="s1">y_hat</span><span class="s3">).</span><span class="s1">ravel</span><span class="s3">()</span>
+<span class="s1">accuracy </span><span class="s3">= </span><span class="s1">accuracy_score</span><span class="s3">(</span><span class="s1">y_test</span><span class="s3">, </span><span class="s1">y_hat</span><span class="s3">)</span>
+<span class="s1">f1 </span><span class="s3">= </span><span class="s1">f1_score</span><span class="s3">(</span><span class="s1">y_test</span><span class="s3">, </span><span class="s1">y_hat</span><span class="s3">, </span><span class="s1">zero_division</span><span class="s3">=</span><span class="s5">1.0</span><span class="s3">)</span>
+<span class="s1">print</span><span class="s3">(</span><span class="s1">tn</span><span class="s3">, </span><span class="s1">fp</span><span class="s3">, </span><span class="s1">fn</span><span class="s3">, </span><span class="s1">tp</span><span class="s3">, </span><span class="s1">accuracy</span><span class="s3">, </span><span class="s1">f1</span><span class="s3">)</span>
+<span class="s0">#%% md 
+</span><span class="s1">both are very similar\ 
+F1 score little bit better using TF-IDF\ 
+accuracy is exactly the same 
+</span><span class="s0">#%% md 
+</span><span class="s1">### a little experiment 
+ 
+because the text length was so different in the two classes 
+</span><span class="s0">#%% 
+# How well would a model perform, which is only trained on length of text?</span>
+<span class="s1">X </span><span class="s3">= </span><span class="s1">data</span><span class="s3">[</span><span class="s4">&quot;text&quot;</span><span class="s3">].</span><span class="s1">apply</span><span class="s3">(</span><span class="s1">len</span><span class="s3">).</span><span class="s1">to_numpy</span><span class="s3">().</span><span class="s1">reshape</span><span class="s3">(-</span><span class="s5">1</span><span class="s3">,</span><span class="s5">1</span><span class="s3">)</span>
+<span class="s1">y </span><span class="s3">= </span><span class="s1">data</span><span class="s3">[</span><span class="s4">&quot;is_depression&quot;</span><span class="s3">].</span><span class="s1">to_numpy</span><span class="s3">()</span>
+<span class="s0"># train test split</span>
+<span class="s1">X_train</span><span class="s3">, </span><span class="s1">X_test</span><span class="s3">, </span><span class="s1">y_train</span><span class="s3">, </span><span class="s1">y_test </span><span class="s3">= </span><span class="s1">train_test_split</span><span class="s3">(</span><span class="s1">X</span><span class="s3">, </span><span class="s1">y</span><span class="s3">, </span><span class="s1">stratify</span><span class="s3">=</span><span class="s1">y</span><span class="s3">)</span>
+<span class="s0"># train</span>
+<span class="s1">clf </span><span class="s3">= </span><span class="s1">MultinomialNB</span><span class="s3">()</span>
+<span class="s1">clf</span><span class="s3">.</span><span class="s1">fit</span><span class="s3">(</span><span class="s1">X_train</span><span class="s3">, </span><span class="s1">y_train</span><span class="s3">)</span>
+<span class="s0"># predict</span>
+<span class="s1">y_hat </span><span class="s3">= </span><span class="s1">clf</span><span class="s3">.</span><span class="s1">predict</span><span class="s3">(</span><span class="s1">X_test</span><span class="s3">)</span>
+<span class="s0"># evaluate</span>
+<span class="s1">tn</span><span class="s3">, </span><span class="s1">fp</span><span class="s3">, </span><span class="s1">fn</span><span class="s3">, </span><span class="s1">tp </span><span class="s3">= </span><span class="s1">confusion_matrix</span><span class="s3">(</span><span class="s1">y_test</span><span class="s3">, </span><span class="s1">y_hat</span><span class="s3">).</span><span class="s1">ravel</span><span class="s3">()</span>
+<span class="s1">accuracy </span><span class="s3">= </span><span class="s1">accuracy_score</span><span class="s3">(</span><span class="s1">y_test</span><span class="s3">, </span><span class="s1">y_hat</span><span class="s3">)</span>
+<span class="s1">f1 </span><span class="s3">= </span><span class="s1">f1_score</span><span class="s3">(</span><span class="s1">y_test</span><span class="s3">, </span><span class="s1">y_hat</span><span class="s3">, </span><span class="s1">zero_division</span><span class="s3">=</span><span class="s5">1.0</span><span class="s3">)</span>
+<span class="s0"># it just thinks everything is not depression. so 50%. works horrible.</span>
+<span class="s0"># we could try adding some more features if we feel like it, but not right now.</span>
+<span class="s1">print</span><span class="s3">(</span><span class="s1">tn</span><span class="s3">, </span><span class="s1">fp</span><span class="s3">, </span><span class="s1">fn</span><span class="s3">, </span><span class="s1">tp</span><span class="s3">, </span><span class="s1">accuracy</span><span class="s3">, </span><span class="s1">f1</span><span class="s3">)</span>
+<span class="s1">print</span><span class="s3">(</span><span class="s1">np</span><span class="s3">.</span><span class="s1">unique</span><span class="s3">(</span><span class="s1">y_hat</span><span class="s3">, </span><span class="s1">return_counts</span><span class="s3">=</span><span class="s2">True</span><span class="s3">))</span>
+<span class="s0">#%% md 
+</span><span class="s1">This predicts everything as not depression\ 
+Accuracy 50% =&gt; random guessing\ 
+</span><span class="s0">#%% md 
+</span><span class="s1">### LSTM 
+using this resource 
+https://towardsdatascience.com/naive-bayes-and-lstm-based-classifier-models-63d521a48c20 
+</span><span class="s0">#%% 
+</span><span class="s1">X </span><span class="s3">= </span><span class="s1">data</span><span class="s3">[</span><span class="s4">'text'</span><span class="s3">].</span><span class="s1">to_numpy</span><span class="s3">()</span>
+<span class="s1">y </span><span class="s3">= </span><span class="s1">data</span><span class="s3">[</span><span class="s4">'is_depression'</span><span class="s3">].</span><span class="s1">to_numpy</span><span class="s3">()</span>
+<span class="s0"># train test split</span>
+<span class="s1">X_train</span><span class="s3">, </span><span class="s1">X_test</span><span class="s3">, </span><span class="s1">y_train</span><span class="s3">, </span><span class="s1">y_test </span><span class="s3">= </span><span class="s1">train_test_split</span><span class="s3">(</span><span class="s1">X</span><span class="s3">, </span><span class="s1">y</span><span class="s3">, </span><span class="s1">stratify</span><span class="s3">=</span><span class="s1">y</span><span class="s3">)</span>
+<span class="s0">#%% md 
+</span><span class="s1">### Prepering the data for NN 
+</span><span class="s0">#%% 
+# Hyperparameters of the model</span>
+<span class="s1">oov_tok </span><span class="s3">= </span><span class="s4">'&lt;OOK&gt;'</span>
+<span class="s1">embedding_dim </span><span class="s3">= </span><span class="s5">100</span>
+<span class="s1">max_length </span><span class="s3">= </span><span class="s5">150</span>
+<span class="s1">padding_type</span><span class="s3">=</span><span class="s4">'post'</span>
+<span class="s1">trunc_type</span><span class="s3">=</span><span class="s4">'post'</span>
+
+<span class="s0"># tokenizes sentences</span>
+<span class="s1">tokenizer </span><span class="s3">= </span><span class="s1">Tokenizer</span><span class="s3">()</span>
+<span class="s1">tokenizer</span><span class="s3">.</span><span class="s1">fit_on_texts</span><span class="s3">(</span><span class="s1">X_train</span><span class="s3">)</span>
+
+<span class="s0"># vocabulary size</span>
+<span class="s1">word_index </span><span class="s3">= </span><span class="s1">tokenizer</span><span class="s3">.</span><span class="s1">word_index</span>
+<span class="s1">vocab_size </span><span class="s3">= </span><span class="s1">len</span><span class="s3">(</span><span class="s1">tokenizer</span><span class="s3">.</span><span class="s1">word_index</span><span class="s3">) + </span><span class="s5">1</span>
+
+<span class="s0"># converts train dataset to sequence and pads sequences</span>
+<span class="s1">train_sequences </span><span class="s3">= </span><span class="s1">tokenizer</span><span class="s3">.</span><span class="s1">texts_to_sequences</span><span class="s3">(</span><span class="s1">X_train</span><span class="s3">)</span>
+<span class="s1">train_padded </span><span class="s3">= </span><span class="s1">pad_sequences</span><span class="s3">(</span><span class="s1">train_sequences</span><span class="s3">, </span><span class="s1">padding</span><span class="s3">=</span><span class="s4">'post'</span><span class="s3">, </span><span class="s1">maxlen</span><span class="s3">=</span><span class="s1">max_length</span><span class="s3">)</span>
+
+<span class="s0"># converts Test dataset to sequence and pads sequences</span>
+<span class="s1">test_sequences </span><span class="s3">= </span><span class="s1">tokenizer</span><span class="s3">.</span><span class="s1">texts_to_sequences</span><span class="s3">(</span><span class="s1">X_test</span><span class="s3">)</span>
+<span class="s1">test_padded </span><span class="s3">= </span><span class="s1">pad_sequences</span><span class="s3">(</span><span class="s1">test_sequences</span><span class="s3">, </span><span class="s1">padding</span><span class="s3">=</span><span class="s4">'post'</span><span class="s3">, </span><span class="s1">maxlen</span><span class="s3">=</span><span class="s1">max_length</span><span class="s3">)</span>
+<span class="s0">#%% md 
+</span><span class="s1">### initialize sequential model with multiple layers 
+</span><span class="s0">#%% 
+</span><span class="s1">model </span><span class="s3">= </span><span class="s1">keras</span><span class="s3">.</span><span class="s1">Sequential</span><span class="s3">([</span>
+    <span class="s1">keras</span><span class="s3">.</span><span class="s1">layers</span><span class="s3">.</span><span class="s1">Embedding</span><span class="s3">(</span><span class="s1">vocab_size</span><span class="s3">, </span><span class="s1">embedding_dim</span><span class="s3">, </span><span class="s1">input_length</span><span class="s3">=</span><span class="s1">max_length</span><span class="s3">),</span>
+    <span class="s1">keras</span><span class="s3">.</span><span class="s1">layers</span><span class="s3">.</span><span class="s1">Bidirectional</span><span class="s3">(</span><span class="s1">keras</span><span class="s3">.</span><span class="s1">layers</span><span class="s3">.</span><span class="s1">LSTM</span><span class="s3">(</span><span class="s5">64</span><span class="s3">)),</span>
+    <span class="s1">keras</span><span class="s3">.</span><span class="s1">layers</span><span class="s3">.</span><span class="s1">Dense</span><span class="s3">(</span><span class="s5">24</span><span class="s3">, </span><span class="s1">activation</span><span class="s3">=</span><span class="s4">'relu'</span><span class="s3">),</span>
+    <span class="s1">keras</span><span class="s3">.</span><span class="s1">layers</span><span class="s3">.</span><span class="s1">Dense</span><span class="s3">(</span><span class="s5">1</span><span class="s3">, </span><span class="s1">activation</span><span class="s3">=</span><span class="s4">'sigmoid'</span><span class="s3">)</span>
+<span class="s3">])</span>
+
+<span class="s0"># compiles model</span>
+<span class="s1">model</span><span class="s3">.</span><span class="s1">compile</span><span class="s3">(</span><span class="s1">loss</span><span class="s3">=</span><span class="s4">'binary_crossentropy'</span><span class="s3">,</span>
+              <span class="s1">optimizer</span><span class="s3">=</span><span class="s4">'adam'</span><span class="s3">,</span>
+              <span class="s1">metrics</span><span class="s3">=[</span><span class="s4">'accuracy'</span><span class="s3">])</span>
+
+<span class="s0"># model summary</span>
+<span class="s1">model</span><span class="s3">.</span><span class="s1">summary</span><span class="s3">()</span>
+<span class="s0">#%% md 
+</span><span class="s1">### training the model 
+</span><span class="s0">#%% 
+</span><span class="s1">num_epochs </span><span class="s3">= </span><span class="s5">5</span>
+<span class="s1">history </span><span class="s3">= </span><span class="s1">model</span><span class="s3">.</span><span class="s1">fit</span><span class="s3">(</span><span class="s1">train_padded</span><span class="s3">, </span><span class="s1">y_train</span><span class="s3">, </span>
+                    <span class="s1">epochs</span><span class="s3">=</span><span class="s1">num_epochs</span><span class="s3">, </span><span class="s1">verbose</span><span class="s3">=</span><span class="s5">1</span><span class="s3">, </span>
+                    <span class="s1">validation_split</span><span class="s3">=</span><span class="s5">0.1</span><span class="s3">)</span>
+<span class="s0">#%% md 
+</span><span class="s1">very high accuracy towards the end\ 
+validation accuracy stays around the same\ 
+validation loss gets a bit larger 
+</span><span class="s0">#%% md 
+</span><span class="s1">### Model Evaluation &amp; Performance Metrics 
+</span><span class="s0">#%% 
+# Gets probabilities</span>
+<span class="s1">prediction </span><span class="s3">= </span><span class="s1">model</span><span class="s3">.</span><span class="s1">predict</span><span class="s3">(</span><span class="s1">test_padded</span><span class="s3">)</span>
+<span class="s1">print</span><span class="s3">(</span><span class="s4">&quot;The probabilities are - &quot;</span><span class="s3">, </span><span class="s1">prediction</span><span class="s3">, </span><span class="s1">sep</span><span class="s3">=</span><span class="s4">'</span><span class="s2">\n</span><span class="s4">'</span><span class="s3">)</span>
+
+<span class="s0"># Gets labels based on probability 1 if p&gt;= 0.5 else 0</span>
+<span class="s2">for </span><span class="s1">each </span><span class="s2">in </span><span class="s1">prediction</span><span class="s3">:</span>
+    <span class="s2">if </span><span class="s1">each</span><span class="s3">[</span><span class="s5">0</span><span class="s3">] &gt;=</span><span class="s5">0.5</span><span class="s3">:</span>
+        <span class="s1">each</span><span class="s3">[</span><span class="s5">0</span><span class="s3">] = </span><span class="s5">1</span>
+    <span class="s2">else</span><span class="s3">:</span>
+        <span class="s1">each</span><span class="s3">[</span><span class="s5">0</span><span class="s3">] = </span><span class="s5">0</span>
+<span class="s1">prediction </span><span class="s3">= </span><span class="s1">prediction</span><span class="s3">.</span><span class="s1">astype</span><span class="s3">(</span><span class="s4">'int32'</span><span class="s3">) </span>
+<span class="s1">print</span><span class="s3">(</span><span class="s4">&quot;</span><span class="s2">\n</span><span class="s4">The labels are - &quot;</span><span class="s3">, </span><span class="s1">prediction</span><span class="s3">, </span><span class="s1">sep</span><span class="s3">=</span><span class="s4">'</span><span class="s2">\n</span><span class="s4">'</span><span class="s3">)</span>
+
+<span class="s0"># Calculates accuracy on Test data</span>
+<span class="s1">print</span><span class="s3">(</span><span class="s4">&quot;</span><span class="s2">\n</span><span class="s4">The accuracy of the model is &quot;</span><span class="s3">, </span><span class="s1">accuracy_score</span><span class="s3">(</span><span class="s1">y_test</span><span class="s3">, </span><span class="s1">prediction</span><span class="s3">))</span>
+<span class="s1">print</span><span class="s3">(</span><span class="s4">&quot;</span><span class="s2">\n</span><span class="s4">The accuracy and other metrics are </span><span class="s2">\n</span><span class="s4">&quot;</span><span class="s3">, </span><span class="s1">classification_report</span><span class="s3">(</span><span class="s1">y_test</span><span class="s3">, </span><span class="s1">prediction</span><span class="s3">, </span><span class="s1">labels</span><span class="s3">=[</span><span class="s5">0</span><span class="s3">, </span><span class="s5">1</span><span class="s3">]),</span><span class="s1">sep</span><span class="s3">=</span><span class="s4">'</span><span class="s2">\n</span><span class="s4">'</span><span class="s3">)</span>
+<span class="s0">#%% md 
+</span><span class="s1">all accuracies are very high with around 94%\ 
+=&gt; identifies both depression &amp; non depression posts very good 
+</span><span class="s0">#%% md 
+</span><span class="s1">## Model Prediction on New Sentences 
+</span><span class="s0">#%% 
+# trying some recent posts I am getting from r/depression and non depression related subreddits</span>
+<span class="s1">sentence </span><span class="s3">= [</span><span class="s4">&quot;Our most-broken and least-understood rules is </span><span class="s2">\&quot;</span><span class="s4">helpers may not invite private contact as a first resort</span><span class="s2">\&quot;</span><span class="s4">, so we've made a new wiki to explain it&quot;</span><span class="s3">, </span>
+            <span class="s4">&quot;Idk why but everyone seems depressed these days (including me).. Is it a phase that everyone goes through? Or is it just that our generation is fucked?&quot;</span><span class="s3">, </span>
+            <span class="s4">&quot;For everyone that needs to hear it I love you no matter what and just keep up the hard work. Stuff will get better in the near future so keep your heads up&quot;</span><span class="s3">,</span>
+            <span class="s4">&quot;Guys I have a 2 in 1 laptop, Fedora was working incredibly from a USB Flashdrive compared to other distros, it was fast and everything worked just fine, but then I updated it and it became really slow, almost unusable... Any recommendations?&quot;</span><span class="s3">]</span>
+
+<span class="s0"># converts to a sequence</span>
+<span class="s1">test_sequences </span><span class="s3">= </span><span class="s1">tokenizer</span><span class="s3">.</span><span class="s1">texts_to_sequences</span><span class="s3">(</span><span class="s1">sentence</span><span class="s3">)</span>
+
+<span class="s0"># pads the sequence</span>
+<span class="s1">test_padded </span><span class="s3">= </span><span class="s1">pad_sequences</span><span class="s3">(</span><span class="s1">test_sequences</span><span class="s3">, </span><span class="s1">padding</span><span class="s3">=</span><span class="s4">'post'</span><span class="s3">, </span><span class="s1">maxlen</span><span class="s3">=</span><span class="s1">max_length</span><span class="s3">)</span>
+
+<span class="s0"># Gets probabilities</span>
+<span class="s1">prediction </span><span class="s3">= </span><span class="s1">model</span><span class="s3">.</span><span class="s1">predict</span><span class="s3">(</span><span class="s1">test_padded</span><span class="s3">)</span>
+<span class="s1">print</span><span class="s3">(</span><span class="s4">&quot;The probabilities are - &quot;</span><span class="s3">, </span><span class="s1">prediction</span><span class="s3">, </span><span class="s1">sep</span><span class="s3">=</span><span class="s4">'</span><span class="s2">\n</span><span class="s4">'</span><span class="s3">)</span>
+
+<span class="s0"># Gets labels based on probability 1 if p&gt;= 0.5 else 0</span>
+<span class="s2">for </span><span class="s1">each </span><span class="s2">in </span><span class="s1">prediction</span><span class="s3">:</span>
+    <span class="s2">if </span><span class="s1">each</span><span class="s3">[</span><span class="s5">0</span><span class="s3">] &gt;=</span><span class="s5">0.5</span><span class="s3">:</span>
+        <span class="s1">each</span><span class="s3">[</span><span class="s5">0</span><span class="s3">] = </span><span class="s5">1</span>
+    <span class="s2">else</span><span class="s3">:</span>
+        <span class="s1">each</span><span class="s3">[</span><span class="s5">0</span><span class="s3">] = </span><span class="s5">0</span>
+<span class="s1">prediction </span><span class="s3">= </span><span class="s1">prediction</span><span class="s3">.</span><span class="s1">astype</span><span class="s3">(</span><span class="s4">'int32'</span><span class="s3">) </span>
+<span class="s1">print</span><span class="s3">(</span><span class="s4">&quot;</span><span class="s2">\n</span><span class="s4">The labels are - &quot;</span><span class="s3">, </span><span class="s1">prediction</span><span class="s3">, </span><span class="s1">sep</span><span class="s3">=</span><span class="s4">'</span><span class="s2">\n</span><span class="s4">'</span><span class="s3">)</span>
+<span class="s0">#%% md 
+</span></pre>
+</body>
+</html>
